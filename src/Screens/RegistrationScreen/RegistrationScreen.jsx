@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 import {
   StyleSheet,
@@ -9,10 +9,10 @@ import {
   TextInput,
   View,
   Image,
-  Dimensions,
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  ScrollView,
 } from "react-native";
 
 import bgImg from "../../assets/images/bg.png";
@@ -25,24 +25,11 @@ const RegistrationScreen = () => {
     email: "",
     password: "",
   });
-  const [isLoginFocused, setIsLoginFocused] = useState(false);
-  const [isEmailFocused, setIsEmailFocused] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [dimensions, setDimensions] = useState(Dimensions.get("window").width);
-
-  useEffect(() => {
-    const onChange = () => {
-      const width = Dimensions.get("window").width;
-      setDimensions(width);
-    };
-    const listener = Dimensions.addEventListener("change", onChange);
-    return () => {
-      listener.remove();
-    };
-  }, []);
+  const [isFocused, setIsFocused] = useState(null);
+  const [showPassword, setShowPassword] = useState(true);
 
   const handleSubmit = () => {
+    console.log(state);
     Keyboard.dismiss();
     setState({
       email: "",
@@ -50,24 +37,27 @@ const RegistrationScreen = () => {
     });
   };
 
-  const handleLoginFocus = () => {
-    setIsLoginFocused(true);
-  };
-  const handleEmailFocus = () => {
-    setIsEmailFocused(true);
-  };
-  const handlePasswordFocus = () => {
-    setIsPasswordFocused(true);
+  const handleChangeText = (name, value) => {
+    if (name === "password") {
+      setState((prevState) => ({
+        ...prevState,
+        [name]: value.toLowerCase(),
+      }));
+    } else {
+      setState((prevState) => ({
+        ...prevState,
+        [name]: value,
+      }));
+    }
   };
 
-  const handleLoginChangeFocus = () => {
-    setIsLoginFocused(false);
+  const onFocus = (name) => {
+    setIsFocused(name);
   };
-  const handleEmailChangeFocus = () => {
-    setIsEmailFocused(false);
-  };
-  const handlePasswordChangeFocus = () => {
-    setIsPasswordFocused(false);
+
+  const onBlur = () => {
+    setIsFocused(null);
+    Keyboard.dismiss();
   };
 
   const passwordVisibility = () => {
@@ -75,78 +65,85 @@ const RegistrationScreen = () => {
   };
 
   return (
-    <TouchableWithoutFeedback onPressIn={Keyboard.dismiss}>
+    <TouchableWithoutFeedback onPressIn={onBlur}>
       <View style={styles.container}>
         <ImageBackground source={bgImg} style={styles.image}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS == "android" ? "padding" : "height"}
-          >
-            <View style={{ ...styles.form, width: dimensions }}>
-              <View style={styles.avatarContainer}>
-                <Image source={avatarPlace} style={styles.avatarPlace} />
+          <ScrollView contentContainerStyle={styles.scrollView}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS == "android" ? "padding" : "height"}
+            >
+              <View
+                style={{
+                  ...styles.form,
+                }}
+              >
+                <View style={styles.avatarContainer}>
+                  <Image source={avatarPlace} style={styles.avatarPlace} />
+
+                  <TouchableOpacity>
+                    <Image source={addBtn} style={styles.addAvatarBtn} />
+                  </TouchableOpacity>
+                </View>
+                <View>
+                  <Text style={styles.title}>Реєстрація</Text>
+                </View>
+                <View>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      isFocused === "login" && styles.focusedInput,
+                    ]}
+                    value={state.login}
+                    placeholder="Логін"
+                    onChangeText={(value) => handleChangeText("login", value)}
+                    onFocus={() => onFocus("login")}
+                  />
+                </View>
+                <View>
+                  <TextInput
+                    placeholder="Адреса електронної пошти"
+                    style={[
+                      styles.input,
+                      isFocused === "email" && styles.focusedInput,
+                    ]}
+                    value={state.email}
+                    onChangeText={(value) => handleChangeText("email", value)}
+                    onFocus={() => onFocus("email")}
+                  />
+                </View>
+                <View>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      isFocused === "password" && styles.focusedInput,
+                    ]}
+                    value={state.password}
+                    secureTextEntry={showPassword}
+                    placeholder="Пароль"
+                    onChangeText={(value) =>
+                      handleChangeText("password", value)
+                    }
+                    onFocus={() => onFocus("password")}
+                  />
+                  <TouchableOpacity>
+                    <Text style={styles.showText} onPress={passwordVisibility}>
+                      {showPassword ? "Показати" : "Приховати"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity style={styles.btn} onPress={handleSubmit}>
+                  <Text style={styles.btnText}>Зареєстуватися</Text>
+                </TouchableOpacity>
 
                 <TouchableOpacity>
-                  <Image source={addBtn} style={styles.addAvatarBtn} />
+                  <Text style={styles.loginText}>
+                    Вже є акаунт? <Text>Увійти</Text>
+                  </Text>
                 </TouchableOpacity>
               </View>
-              <View>
-                <Text style={styles.title}>Реєстрація</Text>
-              </View>
-              <View>
-                <TextInput
-                  style={[styles.input, isLoginFocused && styles.focusedInput]}
-                  value={state.login}
-                  placeholder="Логін"
-                  onChangeText={(value) =>
-                    setState((prevState) => ({ ...prevState, login: value }))
-                  }
-                  onFocus={handleLoginFocus}
-                  onBlur={handleLoginChangeFocus}
-                />
-              </View>
-              <View>
-                <TextInput
-                  placeholder="Адреса електронної пошти"
-                  style={[styles.input, isEmailFocused && styles.focusedInput]}
-                  value={state.email}
-                  onChangeText={(value) =>
-                    setState((prevState) => ({ ...prevState, email: value }))
-                  }
-                  onFocus={handleEmailFocus}
-                  onBlur={handleEmailChangeFocus}
-                />
-              </View>
-              <View>
-                <TextInput
-                  style={[
-                    styles.input,
-                    isPasswordFocused && styles.focusedInput,
-                  ]}
-                  value={state.password}
-                  secureTextEntry={passwordVisibility}
-                  placeholder="Пароль"
-                  onChangeText={(value) =>
-                    setState((prevState) => ({ ...prevState, password: value }))
-                  }
-                  onFocus={handlePasswordFocus}
-                  onBlur={handlePasswordChangeFocus}
-                />
-                <TouchableOpacity>
-                  <Text style={styles.showText}>Показати</Text>
-                </TouchableOpacity>
-              </View>
-
-              <TouchableOpacity style={styles.btn}>
-                <Text style={styles.btnText}>Зареєстуватися</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity>
-                <Text style={styles.loginText}>
-                  Вже є акаунт? <Text>Увійти</Text>
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+          </ScrollView>
         </ImageBackground>
       </View>
     </TouchableWithoutFeedback>
@@ -157,8 +154,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
-    alignItems: "center",
+    padding: 0,
+    margin: 0,
+  },
+  scrollView: {
+    flexGrow: 1,
     justifyContent: "flex-end",
+    paddingTop: 160,
   },
   image: {
     flex: 1,
@@ -176,10 +178,11 @@ const styles = StyleSheet.create({
   //form
   form: {
     width: "100%",
-    height: 549,
+    minHeight: 549,
     borderTopRightRadius: 25,
     borderTopLeftRadius: 25,
     backgroundColor: "#ffffff",
+    paddingBottom: 40,
   },
   title: {
     color: "#212121",
@@ -192,7 +195,9 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 50,
-    width: 343,
+    // width: 343,
+    width: "80%",
+    alignSelf: "center",
     backgroundColor: "#F6F6F6",
     borderWidth: 1,
     borderColor: "#E8E8E8",

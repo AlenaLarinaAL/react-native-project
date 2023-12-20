@@ -8,114 +8,136 @@ import {
   Text,
   TextInput,
   View,
-  Dimensions,
   KeyboardAvoidingView,
   Platform,
   Keyboard,
+  ScrollView,
 } from "react-native";
 
 import bgImg from "../../assets/images/bg.png";
 
 const LoginScreen = () => {
   const [state, setState] = useState({
-    email: "",
-    password: "",
+    email: { value: "", focused: false },
+    password: { value: "", focused: false },
   });
-  const [isEmailFocused, setIsEmailFocused] = useState(false);
-  const [isPasswordFocused, setIsPasswordFocused] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [dimensions, setDimensions] = useState(Dimensions.get("window").width);
+
+  const [showPassword, setShowPassword] = useState(true);
 
   const handleSubmit = () => {
+    console.log(state);
     Keyboard.dismiss();
     setState({
-      email: "",
-      password: "",
+      email: { value: "", focused: false },
+      password: { value: "", focused: false },
     });
   };
 
   const handleFocus = (input) => {
-    if (input === "email") setIsEmailFocused(true);
-    else if (input === "password") setIsPasswordFocused(true);
+    setState((prevState) => ({
+      ...prevState,
+      [input]: { ...prevState[input], focused: true },
+    }));
   };
-
-  const handleChangeFocus = (input) => {
-    if (input === "email") setIsEmailFocused(false);
-    else if (input === "password") setIsPasswordFocused(false);
+  const handleBlur = (input) => {
+    setState((prevState) => ({
+      ...prevState,
+      [input]: { ...prevState[input], focused: false },
+    }));
+    Keyboard.dismiss();
   };
 
   const passwordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
+  const handleChange = (input, value) => {
+    if (input === "password") {
+      value = value.toLowerCase();
+    }
+    setState((prevState) => ({
+      ...prevState,
+      [input]: { ...prevState[input], value },
+    }));
+  };
+
+  const keyboardHide = () => {
+    Keyboard.dismiss();
+  };
+
   return (
-    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+    <TouchableWithoutFeedback onPress={keyboardHide}>
       <View style={styles.container}>
         <ImageBackground source={bgImg} style={styles.imageBg}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS == "android" ? "padding" : "height"}
-          >
-            <View
-              style={{
-                ...styles.form,
-                width: dimensions,
-              }}
+          <ScrollView contentContainerStyle={styles.scrollView}>
+            <KeyboardAvoidingView
+              behavior={Platform.OS == "android" ? "padding" : "height"}
             >
-              <View>
-                <Text style={styles.title}>Увійти</Text>
-              </View>
-              <View>
-                <TextInput
-                  style={[styles.input, isEmailFocused && styles.focusedInput]}
-                  value={state.email}
-                  placeholder="Адреса електронної пошти"
-                  onChangeText={(value) =>
-                    setState((prevState) => ({ ...prevState, email: value }))
-                  }
-                  onFocus={() => {
-                    handleFocus("email");
-                  }}
-                  onBlur={() => {
-                    handleChangeFocus("email");
-                  }}
-                />
-              </View>
-              <View>
-                <TextInput
-                  style={[
-                    styles.input,
-                    isPasswordFocused && styles.focusedInput,
-                  ]}
-                  value={state.password}
-                  secureTextEntry={passwordVisibility}
-                  placeholder="Пароль"
-                  onChangeText={(value) =>
-                    setState((prevState) => ({ ...prevState, password: value }))
-                  }
-                  onFocus={() => {
-                    handleFocus("password");
-                  }}
-                  onBlur={() => {
-                    handleChangeFocus("password");
-                  }}
-                />
+              <View
+                style={{
+                  ...styles.form,
+                }}
+              >
+                <View>
+                  <Text style={styles.title}>Увійти</Text>
+                </View>
+                <View>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      state.email.focused && styles.focusedInput,
+                    ]}
+                    value={state.email.value}
+                    placeholder="Адреса електронної пошти"
+                    onChangeText={(value) => handleChange("email", value)}
+                    onFocus={() => {
+                      handleFocus("email");
+                    }}
+                    onBlur={() => {
+                      handleBlur("email");
+                    }}
+                  />
+                </View>
+                <View>
+                  <TextInput
+                    style={[
+                      styles.input,
+                      state.password.focused && styles.focusedInput,
+                    ]}
+                    value={state.password.value}
+                    secureTextEntry={showPassword}
+                    placeholder="Пароль"
+                    onChangeText={(value) => handleChange("password", value)}
+                    onFocus={() => {
+                      handleFocus("password");
+                    }}
+                    onBlur={() => {
+                      handleBlur("password");
+                    }}
+                  />
+                  <TouchableOpacity>
+                    <Text style={styles.showText} onPress={passwordVisibility}>
+                      {showPassword ? "Показати" : "Приховати"}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity style={styles.btn} onPress={handleSubmit}>
+                  <Text style={styles.btnText}>Увійти</Text>
+                </TouchableOpacity>
+
                 <TouchableOpacity>
-                  <Text style={styles.showText}>Показати</Text>
+                  <Text style={styles.accountText}>
+                    Немає акаунту?
+                    <Text style={styles.registrationText}>
+                      {" "}
+                      Зареєструватися
+                    </Text>
+                  </Text>
                 </TouchableOpacity>
               </View>
-
-              <TouchableOpacity style={styles.btn} onPress={handleSubmit}>
-                <Text style={styles.btnText}>Увійти</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity>
-                <Text style={styles.accountText}>
-                  Немає акаунту?{" "}
-                  <Text style={styles.registrationText}>Зареєструватися</Text>
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </KeyboardAvoidingView>
+            </KeyboardAvoidingView>
+          </ScrollView>
         </ImageBackground>
       </View>
     </TouchableWithoutFeedback>
@@ -126,6 +148,11 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#ffffff",
+  },
+  scrollView: {
+    flexGrow: 1,
+    justifyContent: "flex-end",
+    // paddingTop: 160,
   },
   imageBg: {
     flex: 1,
